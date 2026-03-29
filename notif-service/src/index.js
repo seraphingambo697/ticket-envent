@@ -1,6 +1,5 @@
-\
 const express = require('express');
-const amqp    = require('amqplib');
+const amqp = require('amqplib');
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -13,94 +12,105 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-const QUEUE    = 'ticket_purchased';
+const QUEUE = 'ticket_purchased';
 const RABB_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@rabbitmq:5672/';
 
-// ── Simulateur d'envoi email/SMS ──────────────────────────────────────────
 function sendEmail(to, subject, body) {
-  logger.info(`[EMAIL SIMULÉ] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  logger.info(`[EMAIL] À       : ${to}`);
-  logger.info(`[EMAIL] Sujet   : ${subject}`);
-  logger.info(`[EMAIL] Message :\n${body}`);
-  logger.info(`[EMAIL] ✓ Envoyé (simulation — brancher SendGrid/Mailgun en prod)`);
+  logger.info('[EMAIL SIMULE] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  logger.info('[EMAIL] A       : ' + to);
+  logger.info('[EMAIL] Sujet   : ' + subject);
+  logger.info('[EMAIL] Message :\n' + body);
+  logger.info('[EMAIL] Envoye (simulation — brancher SendGrid/Mailgun en prod)');
 }
 
-// ── Consommateur RabbitMQ ─────────────────────────────────────────────────
 async function startConsumer() {
   for (let i = 0; i < 10; i++) {
     try {
-      logger.info(`[RABBIT] connexion tentative ${i + 1} → ${RABB_URL}`);
-      const conn    = await amqp.connect(RABB_URL);
+      logger.info('[RABBIT] connexion tentative ' + (i + 1) + ' -> ' + RABB_URL);
+      const conn = await amqp.connect(RABB_URL);
       const channel = await conn.createChannel();
       await channel.assertQueue(QUEUE, { durable: true });
       channel.prefetch(1);
 
-      logger.info(`[RABBIT ✓] connecté — en écoute sur queue="${QUEUE}"`);
+      logger.info('[RABBIT OK] connecte — en ecoute sur queue="' + QUEUE + '"');
 
       channel.consume(QUEUE, async (msg) => {
         if (!msg) return;
         try {
           const data = JSON.parse(msg.content.toString());
-          logger.info(`[RABBIT ←] message reçu depuis ticket-service`);
-          logger.info(`[NOTIF] Préparation confirmation pour ticket=${data.ticket_number} email=${data.user_email}`);
+          logger.info('[RABBIT <-] message recu depuis ticket-service');
+          logger.info('[NOTIF] ticket=' + data.ticket_number + ' email=' + data.user_email);
 
-          const subject = `Confirmation de votre billet : ${data.ticket_number}`;
+          const subject = 'Confirmation de votre billet : ' + data.ticket_number;
           const body = [
-            `Bonjour,`,
-            ``,
-            `Votre achat est confirmé !`,
-            ``,
-            `  Billet n°   : ${data.ticket_number}`,
-            `  Événement   : ${data.event_title || data.event_id}`,
-            `  Montant payé: ${data.amount_paid} €`,
-            `  Référence   : ${data.payment_id}`,
-            ``,
-            `Présentez ce numéro à l'entrée de la salle.`,
-            `Votre billet est lié à votre compte et vérifiable à tout moment.`,
-            ``,
-            `À bientôt !`,
-            `L'équipe TicketApp`,
+            'Bonjour,',
+            '',
+            'Votre achat est confirme !',
+            '',
+            '  Billet n    : ' + data.ticket_number,
+            '  Evenement   : ' + (data.event_title || data.event_id),
+            '  Montant paye: ' + data.amount_paid + ' EUR',
+            '  Reference   : ' + data.payment_id,
+            '',
+            'Presentez ce numero a l\'entree de la salle.',
+            '',
+            'A bientot !',
+            'L\'equipe TicketApp',
           ].join('\n');
 
           sendEmail(data.user_email, subject, body);
-
           channel.ack(msg);
-          logger.info(`[RABBIT ACK] notification envoyée pour ticket=${data.ticket_number}`);
+          logger.info('[RABBIT ACK] notification envoyee pour ticket=' + data.ticket_number);
         } catch (e) {
-          logger.error(`[NOTIF ERREUR] ${e.message}`);
+          logger.error('[NOTIF ERREUR] ' + e.message);
           channel.nack(msg, false, false);
         }
       });
 
-      conn.on('error', (e) => logger.error(`[RABBIT CONN ERROR] ${e.message}`));
+      conn.on('error', (e) => logger.error('[RABBIT CONN ERROR] ' + e.message));
       return;
     } catch (e) {
-      logger.warn(`[RABBIT] tentative ${i + 1} échouée: ${e.message} — retry dans 5s`);
+      logger.warn('[RABBIT] tentative ' + (i + 1) + ' echouee: ' + e.message + ' — retry dans 5s');
       await new Promise(r => setTimeout(r, 5000));
     }
   }
-  logger.error('[RABBIT] impossible de connecter après 10 tentatives');
+  logger.error('[RABBIT] impossible de connecter apres 10 tentatives');
 }
 
-// ── API HTTP ───────────────────────────────────────────────────────────────
 const app = express();
 app.use(express.json());
 
+
+// ── CORS 
 app.use((req, res, next) => {
-  logger.info(`[REQ] ${req.method} ${req.url}`);
+  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-// Endpoint HTTP direct (optionnel — pour appels synchrones)
+
+app.use((req, res, next) => {
+  logger.info('[REQ] ' + req.method + ' ' + req.url);
+  next();
+});
+
 app.post('/api/notifications/send', (req, res) => {
   const { to, subject, body } = req.body;
   if (!to || !subject) return res.status(400).json({ error: 'to et subject requis' });
   sendEmail(to, subject, body || '');
-  res.json({ success: true, message: 'Notification envoyée' });
+  res.json({ success: true, message: 'Notification envoyee' });
 });
 
 app.get('/health', (_, res) => res.json({ status: 'ok', service: 'notif-service' }));
 
+app.use((err, req, res, next) => {
+  logger.error('[ERREUR] ' + err.message);
+  res.status(500).json({ error: 'Erreur interne' });
+});
+
 const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => logger.info(`Notif service HTTP démarré sur :${PORT}`));
+app.listen(PORT, () => logger.info('Notif service demarre sur :' + PORT));
 startConsumer();

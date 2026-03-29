@@ -1,26 +1,44 @@
 import os, dj_database_url
-from datetime import timedelta
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret')
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+SECRET_KEY   = os.environ.get('SECRET_KEY', 'dev-secret')
+DEBUG        = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
+    "corsheaders", 
+
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+
     'drf_spectacular',
     'authapp',
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  
+
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
 
-ROOT_URLCONF = 'config.urls'
+# ── TEMPLATES — requis par drf_spectacular pour le Swagger UI ────────────
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+            ],
+        },
+    },
+]
+
+ROOT_URLCONF       = 'config.urls'
 AUTH_USER_MODEL = 'authapp.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -31,28 +49,47 @@ DATABASES = {
     )
 }
 
+
+
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
+    'ROTATE_REFRESH_TOKENS':  True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
+    'USER_ID_FIELD':  'id',
+    'USER_ID_CLAIM':  'user_id',
 }
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Auth Service API',
     'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
+
+
+# ── CORS CONFIG 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # React (Vite)
+    "http://localhost",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "x-request-id",
+]
 
 LOGGING = {
     'version': 1,

@@ -1,19 +1,30 @@
-const express    = require('express');
+const express = require('express');
 const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi  = require('swagger-ui-express');
+const swaggerUi = require('swagger-ui-express');
 const { initDB } = require('./db');
-const usersRouter= require('./routes/users');
-const logger     = require('./logger');
+const usersRouter = require('./routes/users');
+const logger = require('./logger');
 
 const app = express();
 app.use(express.json());
+
+
+// ── CORS 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 // Log chaque requête entrante
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const lvl = res.statusCode >= 400 ? 'warn' : 'info';
-    logger[lvl](`[REQ] ${req.method} ${req.url} → ${res.statusCode} (${Date.now()-start}ms)`);
+    logger[lvl](`[REQ] ${req.method} ${req.url} → ${res.statusCode} (${Date.now() - start}ms)`);
   });
   next();
 });
@@ -37,3 +48,23 @@ initDB()
   .catch(e => { logger.error(`Init DB: ${e.message}`); process.exit(1); });
 
 module.exports = app;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

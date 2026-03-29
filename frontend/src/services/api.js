@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/api' })
+const api = axios.create({ baseURL: 'http://localhost' })
 
 api.interceptors.request.use(cfg => {
   const t = localStorage.getItem('token')
@@ -25,22 +25,22 @@ api.interceptors.response.use(r => r, async err => {
 
 export const authAPI = {
   register: d => api.post('/auth/register/', d),
-  login:    d => api.post('/auth/login/', d),
-  logout:   r => api.post('/auth/logout/', { refresh: r }),
-  me:       ()=> api.get('/auth/me/'),
+  login: d => api.post('/auth/login/', d),
+  logout: r => api.post('/auth/logout/', { refresh: r }),
+  me: () => api.get('/auth/me/'),
 }
 
 export const eventsAPI = {
-  list:   p => api.get('/events/', { params: p }),
-  get:    id=> api.get(`/events/${id}/`),
+  list: p => api.get('/events/', { params: p }),
+  get: id => api.get(`/events/${id}/`),
   create: d => api.post('/events/', d),
-  update: (id,d) => api.patch(`/events/${id}/`, d),
-  delete: id=> api.delete(`/events/${id}/`),
+  update: (id, d) => api.patch(`/events/${id}/`, d),
+  delete: id => api.delete(`/events/${id}/`),
 }
 
 export const ticketsAPI = {
-  list:     ()=> api.get('/tickets/'),
-  get:      id=> api.get(`/tickets/${id}/`),
+  list: () => api.get('/tickets/'),
+  get: id => api.get(`/tickets/${id}/`),
   purchase: d => api.post('/tickets/purchase/', d),
 }
 
