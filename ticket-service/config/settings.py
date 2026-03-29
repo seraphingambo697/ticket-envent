@@ -7,7 +7,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
-    "corsheaders",
+    'corsheaders',
     'rest_framework',
     
     'drf_spectacular',
@@ -15,7 +15,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
@@ -49,6 +49,22 @@ AUTH_SERVICE_URL  = os.environ.get('AUTH_SERVICE_URL',  'http://auth-service:800
 EVENT_SERVICE_URL = os.environ.get('EVENT_SERVICE_URL', 'http://event-service:8000')
 RABBITMQ_URL      = os.environ.get('RABBITMQ_URL',      'amqp://guest:guest@rabbitmq:5672/')
 
+# ── CORS — autorise le frontend React en dev ─────────────────────────────
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',   # Vite dev server
+    'http://localhost:80',     # Nginx frontend prod
+    'http://127.0.0.1:5173',
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_URLS_REGEX = r'^/api/.*$'
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'x-request-id',
+]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['ticketapp.auth.RemoteJWTAuth'],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
@@ -62,22 +78,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-
-# ── CORS CONFIG 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React (Vite)
-    "http://localhost",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "authorization",
-    "content-type",
-    "x-request-id",
-]
 
 LOGGING = {
     'version': 1,

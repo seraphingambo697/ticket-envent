@@ -1,5 +1,5 @@
 const express = require('express');
-const amqp = require('amqplib');
+const amqp    = require('amqplib');
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -12,14 +12,14 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-const QUEUE = 'ticket_purchased';
+const QUEUE    = 'ticket_purchased';
 const RABB_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@rabbitmq:5672/';
 
 async function startConsumer() {
   for (let i = 0; i < 10; i++) {
     try {
       logger.info('[RABBIT] connexion tentative ' + (i + 1) + ' -> ' + RABB_URL);
-      const conn = await amqp.connect(RABB_URL);
+      const conn    = await amqp.connect(RABB_URL);
       const channel = await conn.createChannel();
       await channel.assertQueue(QUEUE, { durable: true });
       channel.prefetch(1);
@@ -61,21 +61,11 @@ async function startConsumer() {
 const app = express();
 app.use(express.json());
 
-// ── CORS 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
-
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const lvl = res.statusCode >= 400 ? 'warn' : 'info';
-    logger[lvl]('[REQ] ' + req.method + ' ' + req.url + ' -> ' + res.statusCode + ' (' + (Date.now() - start) + 'ms)');
+    logger[lvl]('[REQ] ' + req.method + ' ' + req.url + ' -> ' + res.statusCode + ' (' + (Date.now()-start) + 'ms)');
   });
   next();
 });

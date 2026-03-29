@@ -1,10 +1,15 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: 'http://localhost' })
+// En développement et en production :
+// Le gateway Nginx tourne sur http://localhost:80
+// Le frontend (port 5173 dev ou 80 prod) appelle toujours localhost:80
+const API_BASE = 'http://localhost/api'
+
+const api = axios.create({ baseURL: API_BASE })
 
 api.interceptors.request.use(cfg => {
   const t = localStorage.getItem('token')
-  if (t) cfg.headers.Authorization = `Bearer ${t}`
+  if (t) cfg.headers.Authorization = 'Bearer ' + t
   return cfg
 })
 
@@ -13,11 +18,14 @@ api.interceptors.response.use(r => r, async err => {
     const refresh = localStorage.getItem('refresh_token')
     if (refresh) {
       try {
-        const { data } = await axios.post('/api/auth/refresh/', { refresh })
+        const { data } = await axios.post(API_BASE + '/auth/refresh/', { refresh })
         localStorage.setItem('token', data.access)
-        err.config.headers.Authorization = `Bearer ${data.access}`
+        err.config.headers.Authorization = 'Bearer ' + data.access
         return api.request(err.config)
-      } catch { localStorage.clear(); window.location.href = '/login' }
+      } catch {
+        localStorage.clear()
+        window.location.href = '/login'
+      }
     }
   }
   return Promise.reject(err)
@@ -28,19 +36,20 @@ export const authAPI = {
   login: d => api.post('/auth/login/', d),
   logout: r => api.post('/auth/logout/', { refresh: r }),
   me: () => api.get('/auth/me/'),
+  users: () => api.get('/auth/users/'),
 }
 
 export const eventsAPI = {
   list: p => api.get('/events/', { params: p }),
-  get: id => api.get(`/events/${id}/`),
+  get: id => api.get('/events/' + id + '/'),
   create: d => api.post('/events/', d),
-  update: (id, d) => api.patch(`/events/${id}/`, d),
-  delete: id => api.delete(`/events/${id}/`),
+  update: (id, d) => api.patch('/events/' + id + '/', d),
+  delete: id => api.delete('/events/' + id + '/'),
 }
 
 export const ticketsAPI = {
   list: () => api.get('/tickets/'),
-  get: id => api.get(`/tickets/${id}/`),
+  get: id => api.get('/tickets/' + id + '/'),
   purchase: d => api.post('/tickets/purchase/', d),
 }
 

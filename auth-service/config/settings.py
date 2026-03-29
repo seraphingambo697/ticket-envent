@@ -7,10 +7,9 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.auth',
-    "corsheaders", 
-
+    'corsheaders',
     'rest_framework',
-    'rest_framework_simplejwt',
+        'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
 
     'drf_spectacular',
@@ -18,8 +17,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  
-
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
@@ -51,6 +49,22 @@ DATABASES = {
 
 
 
+# ── CORS — autorise le frontend React en dev ─────────────────────────────
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',   # Vite dev server
+    'http://localhost:80',     # Nginx frontend prod
+    'http://127.0.0.1:5173',
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_URLS_REGEX = r'^/api/.*$'
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'x-request-id',
+]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
@@ -73,23 +87,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-
-
-# ── CORS CONFIG 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React (Vite)
-    "http://localhost",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "authorization",
-    "content-type",
-    "x-request-id",
-]
 
 LOGGING = {
     'version': 1,
