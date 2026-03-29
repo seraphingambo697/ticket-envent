@@ -1,5 +1,5 @@
 const express = require('express');
-const amqp    = require('amqplib');
+const amqp = require('amqplib');
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -12,14 +12,14 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-const QUEUE    = 'ticket_purchased';
+const QUEUE = 'ticket_purchased';
 const RABB_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@rabbitmq:5672/';
 
 async function startConsumer() {
   for (let i = 0; i < 10; i++) {
     try {
       logger.info('[RABBIT] connexion tentative ' + (i + 1) + ' -> ' + RABB_URL);
-      const conn    = await amqp.connect(RABB_URL);
+      const conn = await amqp.connect(RABB_URL);
       const channel = await conn.createChannel();
       await channel.assertQueue(QUEUE, { durable: true });
       channel.prefetch(1);
@@ -30,7 +30,7 @@ async function startConsumer() {
         if (!msg) return;
         try {
           const data = JSON.parse(msg.content.toString());
-          logger.info('[RABBIT <-] message recu depuis ticket-service');
+          logger.info('[RABBIT <-] payment message recu depuis ticket-service');
           logger.info('[PAYMENT] ticket=' + data.ticket_number
             + ' email=' + data.user_email
             + ' montant=' + data.amount_paid + 'EUR'
@@ -65,7 +65,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const lvl = res.statusCode >= 400 ? 'warn' : 'info';
-    logger[lvl]('[REQ] ' + req.method + ' ' + req.url + ' -> ' + res.statusCode + ' (' + (Date.now()-start) + 'ms)');
+    logger[lvl]('[REQ] ' + req.method + ' ' + req.url + ' -> ' + res.statusCode + ' (' + (Date.now() - start) + 'ms)');
   });
   next();
 });

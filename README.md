@@ -1,6 +1,6 @@
 # 🎟 TicketApp — Microservices SaaS
 
-Plateforme de billetterie complète construite avec Django, Node.js, React, RabbitMQ et Nginx.
+ Devoir microservice Plateforme de billetterie complète construite avec Django, Node.js, React, RabbitMQ et Nginx.
 
 ## Architecture
 
@@ -90,13 +90,6 @@ make seed         # Données de démo
 make clean        # Tout supprimer (volumes inclus)
 ```
 
-## Sécurité
-
-- Mots de passe hashés PBKDF2 (Django) / bcrypt (Node.js) — jamais en clair
-- JWT access (1h) + refresh (7j) avec blacklist sur logout
-- Rate limiting Nginx : 5 req/s auth, 10 req/s achat, 30 req/s API
-- SELECT FOR UPDATE sur les places → anti-survente garanti
-- Variables d'environnement pour tous les secrets
 
 ## Logs inter-services
 
